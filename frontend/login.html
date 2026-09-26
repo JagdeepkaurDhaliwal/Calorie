@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>Login & Register — CalorieCast</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html">Home</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main style="max-width: 480px; margin: 3rem auto; padding: 0 1rem;">
+    <div class="card">
+      <div style="display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;">
+        <button id="tab-login" class="btn" style="flex: 1; border-radius: 0; background: none; color: var(--accent); border-bottom: 2px solid var(--accent);" onclick="switchTab('login')">Login</button>
+        <button id="tab-register" class="btn" style="flex: 1; border-radius: 0; background: none; color: var(--text-muted);" onclick="switchTab('register')">Register</button>
+      </div>
+
+      <div id="alert-box" style="display: none;"></div>
+
+      <!-- Login Form -->
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" required placeholder="user@example.com" value="alex@example.com">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" value="Password123!">
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem;">
+          <button type="submit" id="btn-submit-login" class="btn btn-primary" style="width: 100%;">Sign In</button>
+          <button type="button" class="btn btn-secondary" style="width: 100%; border: 1px solid var(--accent); color: var(--accent);" onclick="handleDemoLogin()">
+            🌟 Instant Demo / Offline Mode
+          </button>
+        </div>
+
+        <p style="margin-top: 1.2rem; font-size: 0.85rem; color: var(--text-muted); text-align: center; line-height: 1.5;">
+          Demo user: <code>alex@example.com</code> / <code>Password123!</code><br>
+          Admin user: <code>admin@caloriecast.local</code> / <code>AdminPassword123!</code>
+        </p>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" style="display: none;" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" required placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password (min 8 chars)</label>
+          <input type="password" id="reg-password" required minlength="8" placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Account</button>
+      </form>
+
+      <!-- Server Connection Footer -->
+      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span style="color: var(--text-muted);">Backend Server:</span>
+          <strong id="login-server-label" style="color: var(--accent); margin-left: 0.2rem;">--</strong>
+        </div>
+        <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="API.openServerModal()">⚙️ Change IP</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script>
+    // If user is already authenticated, route straight to dashboard
+    if (typeof Auth !== "undefined" && Auth.isLoggedIn()) {
+      const u = Auth.getUser();
+      window.location.href = u && u.role === "admin" ? "/static/admin.html" : "/static/dashboard.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const lbl = document.getElementById("login-server-label");
+      if (lbl && typeof API !== "undefined") {
+        lbl.textContent = API.extractHost(API.baseUrl);
+      }
+    });
+
+    function showAlert(msg, type = "danger", showDemoAction = false) {
+      const box = document.getElementById("alert-box");
+      box.className = `alert alert-${type}`;
+      if (showDemoAction) {
+        box.innerHTML = `
+          <div>${msg}</div>
+          <div style="margin-top: 8px;">
+            <button type="button" class="btn btn-sm btn-primary" onclick="handleDemoLogin()">Launch in Demo Mode</button>
+            <button type="button" class="btn btn-sm btn-secondary" style="margin-left: 6px;" onclick="API.openServerModal()">Configure Server</button>
+          </div>
+        `;
+      } else {
+        box.textContent = msg;
+      }
+      box.style.display = "block";
+    }
+
+    function switchTab(tab) {
+      document.getElementById("alert-box").style.display = "none";
+      if (tab === "login") {
+        document.getElementById("login-form").style.display = "block";
+        document.getElementById("register-form").style.display = "none";
+        document.getElementById("tab-login").style.borderBottom = "2px solid var(--accent)";
+        document.getElementById("tab-login").style.color = "var(--accent)";
+        document.getElementById("tab-register").style.borderBottom = "none";
+        document.getElementById("tab-register").style.color = "var(--text-muted)";
+      } else {
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("register-form").style.display = "block";
+        document.getElementById("tab-register").style.borderBottom = "2px solid var(--accent)";
+        document.getElementById("tab-register").style.color = "var(--accent)";
+        document.getElementById("tab-login").style.borderBottom = "none";
+        document.getElementById("tab-login").style.color = "var(--text-muted)";
+      }
+    }
+
+    function handleDemoLogin() {
+      localStorage.setItem("caloriecast_demo_mode", "1");
+      Auth.setToken("demo-offline-token-xyz");
+      Auth.setUser({
+        id: 1,
+        email: "alex@example.com",
+        name: "Alex Johnson",
+        role: "user",
+        age: 28,
+        gender: "male",
+        weight_kg: 72.5,
+        height_cm: 178.0
+      });
+      window.location.href = "/static/dashboard.html";
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const btn = document.getElementById("btn-submit-login");
+      btn.disabled = true;
+      btn.textContent = "Connecting...";
+
+      try {
+        const tokenResp = await API.post("/auth/login", { email, password });
+        localStorage.removeItem("caloriecast_demo_mode");
+        Auth.setToken(tokenResp.access_token);
+        const user = await API.get("/users/me");
+        Auth.setUser(user);
+        window.location.href = user.role === "admin" ? "/static/admin.html" : "/static/dashboard.html";
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+        const isNetworkErr = err.message.includes("Unable to connect") || err.message.includes("Network error") || err.message.includes("Failed to fetch");
+        showAlert(err.message, "danger", isNetworkErr);
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById("reg-name").value;
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+
+      try {
+        await API.post("/auth/register", { name, email, password });
+        showAlert("Registration successful! Logging you in...", "success");
+        const tokenResp = await API.post("/auth/login", { email, password });
+        Auth.setToken(tokenResp.access_token);
+        const user = await API.get("/users/me");
+        Auth.setUser(user);
+        window.location.href = "/static/predict.html";
+      } catch (err) {
+        showAlert(err.message, "danger");
+      }
+    }
+  </script>
+</body>
+</html>

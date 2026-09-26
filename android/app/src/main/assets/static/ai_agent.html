@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalorieCast">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <title>AI Fitness Agent & Workout Plans — CalorieCast</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html">Home</a>
+      <a href="/static/dashboard.html">Dashboard</a>
+      <a href="/static/workouts.html">Workouts</a>
+      <a href="/static/nutrition.html">Nutrition & Food AI</a>
+      <a href="/static/ai_agent.html" class="active">AI Fitness Agent</a>
+      <a href="/static/live.html">Live Workout</a>
+      <a href="/static/predict.html">Quick Predict</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <h1>AI Fitness & Nutrition Agent</h1>
+      <p>Generate personalized or general fitness blueprints, calculate BMR/TDEE caloric targets, and chat with your AI fitness coach.</p>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <div class="grid grid-cols-2" style="align-items: start; gap: 1.5rem; margin-bottom: 2rem;">
+      <!-- Mode 1: General Plan Card -->
+      <div class="card">
+        <h2>Mode 1: General Fitness Blueprint</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.2rem;">
+          A balanced 7-day fitness regimen and structured nutritional plan covering all major muscle groups, cardiovascular conditioning, and restorative recovery.
+        </p>
+        <button type="button" class="btn btn-secondary" style="width: 100%; font-size: 1rem; padding: 0.75rem;" onclick="generateMode1Plan()">
+          ⚡ Generate 7-Day General Plan
+        </button>
+      </div>
+
+      <!-- Mode 2: Personalized Plan Card -->
+      <div class="card">
+        <h2>Mode 2: Personalized AI Plan</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+          Tailored to your target muscles, BMR/TDEE biometrics, fitness goals, and dietary choices.
+        </p>
+
+        <form id="personalized-plan-form" onsubmit="generateMode2Plan(event)">
+          <div class="form-group">
+            <label for="plan-goal">Primary Fitness Goal</label>
+            <select id="plan-goal">
+              <option value="muscle_building" selected>Muscle Building / Hypertrophy</option>
+              <option value="fat_loss">Fat Loss & Leaning</option>
+              <option value="weight_loss">Weight Loss & Conditioning</option>
+              <option value="lean_fitness">Athletic Tone & Endurance</option>
+              <option value="maintenance">Health Maintenance</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Priority Target Muscles (select 1 or more)</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.3rem;">
+              <label style="font-size: 0.85rem; font-weight: normal;"><input type="checkbox" name="target-muscle" value="chest" checked> Chest 🔴</label>
+              <label style="font-size: 0.85rem; font-weight: normal;"><input type="checkbox" name="target-muscle" value="back" checked> Back 🔴</label>
+              <label style="font-size: 0.85rem; font-weight: normal;"><input type="checkbox" name="target-muscle" value="legs" checked> Legs 🔴</label>
+              <label style="font-size: 0.85rem; font-weight: normal;"><input type="checkbox" name="target-muscle" value="shoulders" checked> Shoulders 🔴</label>
+              <label style="font-size: 0.85rem; font-weight: normal;"><input type="checkbox" name="target-muscle" value="biceps" checked> Biceps 🔴</label>
+              <label style="font-size: 0.85rem; font-weight: normal;"><input type="checkbox" name="target-muscle" value="triceps" checked> Triceps 🔴</label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2" style="gap: 0.8rem;">
+            <div class="form-group">
+              <label for="plan-diet">Dietary Preference</label>
+              <select id="plan-diet">
+                <option value="balanced" selected>Balanced Standard</option>
+                <option value="high_protein_nonveg">High Protein (Non-Veg)</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="vegan">Vegan</option>
+                <option value="low_carb">Low Carb / Keto</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="plan-days">Workout Days / Week</label>
+              <select id="plan-days">
+                <option value="3">3 Days (Full Body Split)</option>
+                <option value="4" selected>4 Days (Upper / Lower)</option>
+                <option value="5">5 Days (Body-Part Split)</option>
+                <option value="6">6 Days (Push / Pull / Legs)</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.75rem;">
+            🎯 Generate Personalized Blueprint
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Plan Presentation Card -->
+    <div class="card" id="plan-display-card" style="display: none; margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 id="plan-display-title" style="margin: 0; color: var(--accent);">Active Fitness Plan</h2>
+          <div id="plan-display-summary" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem;"></div>
+        </div>
+        <div style="text-align: right;">
+          <span class="stat-label">Daily Intake Target</span>
+          <div id="plan-display-target" style="font-size: 1.8rem; font-weight: 700; color: var(--accent);">-- kcal</div>
+        </div>
+      </div>
+
+      <!-- Weekly Schedule -->
+      <h3 style="margin-bottom: 0.8rem;">📅 7-Day Workout Schedule</h3>
+      <div id="plan-display-schedule" class="grid grid-cols-4" style="gap: 0.8rem; margin-bottom: 1.5rem;">
+        <!-- Day cards -->
+      </div>
+
+      <!-- Nutrition & Macro Plan -->
+      <h3 style="margin-bottom: 0.8rem;">🥗 Nutrition Protocol & Macro Targets</h3>
+      <div id="plan-display-nutrition" style="margin-bottom: 1.5rem;">
+        <!-- Macros and meal recommendations -->
+      </div>
+
+      <!-- Safety Disclaimer -->
+      <div class="alert alert-warning" id="plan-display-disclaimer">
+        <!-- Safety disclaimer -->
+      </div>
+    </div>
+
+    <!-- AI Chat Assistant Card -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <h2>💬 Interactive Fitness & Nutrition Assistant</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            Ask questions about workout splits, target muscles, calorie burn rates, and healthy meals.
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Action Prompts -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;" id="chat-quick-actions">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="sendQuickPrompt('What is my daily calorie target and how should I split macros?')">
+          🥗 Daily Calorie Target
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="sendQuickPrompt('What are the best chest exercises for maximum hypertrophy?')">
+          🏋️ Best Chest Exercises
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="sendQuickPrompt('Suggest a healthy high-protein dinner under 400 kcal')">
+          🍲 Dinner Idea <400 kcal
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="sendQuickPrompt('How do sets and reps affect calorie burn?')">
+          🔥 Strength Calorie Formula
+        </button>
+      </div>
+
+      <!-- Chat Box -->
+      <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-bubble chat-bubble-agent">
+            Hello! I am your CalorieCast AI Fitness Assistant. How can I help you achieve your goals today?
+          </div>
+        </div>
+        <form class="chat-input-bar" onsubmit="handleSendChat(event)">
+          <input type="text" id="chat-input" placeholder="Type a question for your AI coach..." style="flex: 1; padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-main);" required>
+          <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.2rem;">Send</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <div class="mobile-bottom-nav">
+    <a href="/static/dashboard.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/static/workouts.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🏋️</span>
+      <span>Workouts</span>
+    </a>
+    <a href="/static/nutrition.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🥗</span>
+      <span>Nutrition</span>
+    </a>
+    <a href="/static/ai_agent.html" class="mobile-nav-item active">
+      <span class="mobile-nav-icon">🤖</span>
+      <span>AI Agent</span>
+    </a>
+    <a href="/static/live.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">⚡</span>
+      <span>Live</span>
+    </a>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/ai_agent.js"></script>
+  <script src="/static/js/pwa.js"></script>
+</body>
+</html>

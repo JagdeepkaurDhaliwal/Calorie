@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalorieCast">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <title>Dashboard & Body Calorie Map — CalorieCast</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html">Home</a>
+      <a href="/static/dashboard.html" class="active">Dashboard</a>
+      <a href="/static/workouts.html">Workouts</a>
+      <a href="/static/nutrition.html">Nutrition & Food AI</a>
+      <a href="/static/ai_agent.html">AI Fitness Agent</a>
+      <a href="/static/live.html">Live Workout</a>
+      <a href="/static/predict.html">Quick Predict</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <h1>Fitness Dashboard & Body Calorie Map</h1>
+      <p>Visual calorie burn distribution across muscle groups, cumulative metrics, and 7-day forecast.</p>
+    </div>
+
+    <!-- Today's Body Calorie Map Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.8rem;">
+        <div>
+          <h2>Today's Body Calorie Map</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            Click any muscle group on the human figure to highlight it in <strong style="color: #ef4444;">RED</strong> and inspect exact calorie burn.
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Today's Exercise Burn</div>
+          <div id="total-today-exercise-cals" style="font-size: 1.8rem; font-weight: 700; color: #ef4444;">0.0 kcal</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 body-map-split" style="align-items: start; gap: 1.5rem;">
+        <!-- Left: Interactive Human Body SVG -->
+        <div id="body-map-container">
+          <!-- Injected by BodyMap component -->
+        </div>
+
+        <!-- Right: Muscle Details & Exercise Log -->
+        <div class="card" style="background: var(--bg-primary); border-color: var(--border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 1rem;">
+            <div>
+              <h3 id="detail-part-title" style="margin: 0; color: #ef4444;">CHEST 🔴</h3>
+              <small id="detail-part-desc" style="color: var(--text-muted);">Pectorals, upper & lower chest</small>
+            </div>
+            <div style="text-align: right;">
+              <span class="stat-label">Burned Today</span>
+              <div id="detail-part-cals" style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">0.0 kcal</div>
+            </div>
+          </div>
+
+          <div id="detail-part-exercises" style="margin-bottom: 1.2rem;">
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+              No exercises logged for this muscle group today.
+            </div>
+          </div>
+
+          <a id="btn-log-muscle-workout" href="/static/workouts.html?part=chest" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center; text-decoration: none;">
+            + Log Workout for this Muscle
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-3 stats-summary-grid" style="margin-bottom: 2rem;">
+      <div class="card stat-card">
+        <div class="stat-label">This Week's Total</div>
+        <div class="stat-value" id="stat-week-total">0.0 kcal</div>
+        <small style="color: var(--text-muted);">Current ISO Week (Mon–Sun)</small>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Average per Workout</div>
+        <div class="stat-value" id="stat-avg-workout">0.0 kcal</div>
+        <small style="color: var(--text-muted);">Across all recorded sessions</small>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Total Workouts</div>
+        <div class="stat-value" id="stat-count">0</div>
+        <small style="color: var(--text-muted);">Completed activities</small>
+      </div>
+    </div>
+
+    <!-- Forecast Card -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Next 7 Days Calorie Forecast</h2>
+        <span id="forecast-method-badge" class="badge badge-seed">Method: Loading...</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+        Expected burn: <strong id="forecast-total" style="color: var(--accent); font-size: 1.2rem;">-- kcal</strong>
+      </p>
+
+      <div class="grid grid-cols-4" id="forecast-days-grid" style="gap: 1rem;">
+        <!-- Injected by dashboard.js -->
+      </div>
+    </div>
+
+    <!-- Workout History Table -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Workout History</h2>
+        <a href="/static/workouts.html" class="btn btn-primary btn-sm">+ Log New Workout</a>
+      </div>
+
+      <div class="table-responsive-wrapper" style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Duration</th>
+              <th>Avg HR</th>
+              <th>Body Temp</th>
+              <th>Calories</th>
+              <th>Intensity</th>
+              <th>Source</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted);">Loading workout records...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+        <span id="page-info" style="font-size: 0.85rem; color: var(--text-muted);">Page 1</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="btn-prev-page" class="btn btn-secondary btn-sm" onclick="changePage(-1)" disabled>Previous</button>
+          <button id="btn-next-page" class="btn btn-secondary btn-sm" onclick="changePage(1)" disabled>Next</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <div class="mobile-bottom-nav">
+    <a href="/static/dashboard.html" class="mobile-nav-item active">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/static/workouts.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🏋️</span>
+      <span>Workouts</span>
+    </a>
+    <a href="/static/nutrition.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🥗</span>
+      <span>Nutrition</span>
+    </a>
+    <a href="/static/ai_agent.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>
+      <span>AI Agent</span>
+    </a>
+    <a href="/static/live.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">⚡</span>
+      <span>Live</span>
+    </a>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/body_map.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/pwa.js"></script>
+</body>
+</html>

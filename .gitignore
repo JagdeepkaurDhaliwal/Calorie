@@ -1,0 +1,48 @@
+# Python & Virtual Environments
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Environment Secrets & Database (Never commit secrets to Git)
+.env
+.env.local
+caloriecast.db
+*.sqlite
+*.sqlite3
+
+# Uploads & User Media
+data/uploads/
+uploads/
+data/raw/*.csv
+!data/raw/.gitkeep
+ml/artifacts/
+!ml/artifacts/.gitkeep
+notebooks/.ipynb_checkpoints/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs & Temporary files
+*.log
+
+# Android Build & SDK Artifacts (Excludes local machine paths and compiled binaries)
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/captures/
+.externalNativeBuild/
+.cxx/
+*.keystore
+*.jks

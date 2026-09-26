@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalorieCast">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <title>Nutrition & AI Food Analysis — CalorieCast</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html">Home</a>
+      <a href="/static/dashboard.html">Dashboard</a>
+      <a href="/static/workouts.html">Workouts</a>
+      <a href="/static/nutrition.html" class="active">Nutrition & Food AI</a>
+      <a href="/static/ai_agent.html">AI Fitness Agent</a>
+      <a href="/static/live.html">Live Workout</a>
+      <a href="/static/predict.html">Quick Predict</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <h1>Nutrition Tracking & AI Food Calorie Scanner</h1>
+      <p>Log daily meals, upload food photos for instant AI nutrition estimates, and monitor calorie balance.</p>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <!-- Daily Calorie Progress Bar Card -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem;">
+        <div>
+          <h2>Daily Calorie Balance</h2>
+          <div id="status-message" style="font-size: 0.95rem; color: var(--text-muted);">Calculating daily intake...</div>
+        </div>
+        <div style="text-align: right;">
+          <span class="stat-label">Remaining</span>
+          <div id="val-remaining-cals" style="font-size: 2.2rem; font-weight: 700; color: var(--accent);">-- kcal</div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-bar-container">
+        <div id="calorie-progress-fill" class="progress-bar-fill fill-safe" style="width: 0%;"></div>
+      </div>
+
+      <div class="grid grid-cols-4" style="gap: 0.8rem; margin-top: 1.2rem;">
+        <div class="macro-pill">
+          <span class="stat-label">Daily Target</span>
+          <span class="macro-val" id="val-target-cals">2000 kcal</span>
+        </div>
+        <div class="macro-pill">
+          <span class="stat-label">Consumed</span>
+          <span class="macro-val" id="val-consumed-cals" style="color: var(--warning);">0 kcal</span>
+        </div>
+        <div class="macro-pill">
+          <span class="stat-label">Exercise Burn</span>
+          <span class="macro-val" id="val-exercise-cals" style="color: #ef4444;">0 kcal</span>
+        </div>
+        <div class="macro-pill">
+          <span class="stat-label">Net Calories</span>
+          <span class="macro-val" id="val-net-cals">0 kcal</span>
+        </div>
+      </div>
+
+      <!-- Macros Breakdown -->
+      <div class="grid grid-cols-3" style="gap: 0.8rem; margin-top: 0.8rem;">
+        <div class="macro-pill" style="border-left: 3px solid #38bdf8;">
+          <span class="stat-label">Protein</span>
+          <span class="macro-val" id="val-total-protein">0.0 g</span>
+        </div>
+        <div class="macro-pill" style="border-left: 3px solid #f59e0b;">
+          <span class="stat-label">Carbs</span>
+          <span class="macro-val" id="val-total-carbs">0.0 g</span>
+        </div>
+        <div class="macro-pill" style="border-left: 3px solid #10b981;">
+          <span class="stat-label">Fat</span>
+          <span class="macro-val" id="val-total-fat">0.0 g</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Food Image Calorie Scanner Card -->
+    <div class="card" style="margin-bottom: 2rem; border: 2px dashed var(--accent);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <h2>📷 AI Food Calorie Image Scanner</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            Snap or upload a photo of your meal. Our AI vision engine analyzes portions, identifies food items, and estimates calories and macros.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2" style="align-items: center; gap: 1.5rem;">
+        <div>
+          <div class="form-group">
+            <label for="food-image-input">Select or Take Food Photo</label>
+            <input type="file" id="food-image-input" accept="image/*" onchange="previewFoodImage(event)" style="padding: 0.6rem; background: var(--bg-primary);">
+          </div>
+          <button type="button" id="btn-analyze-food" class="btn btn-primary" style="width: 100%; font-size: 1rem;" onclick="analyzeFoodImage()" disabled>
+            ✨ Run AI Vision Analysis
+          </button>
+        </div>
+
+        <div style="text-align: center; background: var(--bg-primary); border-radius: var(--radius); padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center;">
+          <img id="food-image-preview" src="" alt="Food Preview" style="max-height: 160px; max-width: 100%; border-radius: 8px; display: none;">
+          <div id="preview-placeholder" style="color: var(--text-muted); font-size: 0.85rem;">
+            Image preview will appear here
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Analysis Result & Edit Section -->
+      <div id="ai-analysis-results" style="display: none; margin-top: 1.5rem; background: var(--bg-secondary); border-top: 1px solid var(--border); padding-top: 1.2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3 style="color: var(--accent); margin: 0;">AI Detected Meal Items (Review & Edit)</h3>
+          <span id="ai-detected-total-badge" class="badge badge-low" style="font-size: 0.85rem;">-- kcal</span>
+        </div>
+
+        <div id="ai-detected-items-table" style="overflow-x: auto; margin-bottom: 1rem;">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="grid grid-cols-2" style="align-items: center; gap: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="ai-confirm-meal-type">Add to Meal Category:</label>
+            <select id="ai-confirm-meal-type">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch" selected>Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" style="font-size: 1rem; height: 42px; margin-top: 1.5rem;" onclick="confirmAiFoodAnalysis()">
+            ✅ Confirm & Add to Meal Log
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meals Grid (Breakfast, Lunch, Dinner, Snack) -->
+    <div class="grid grid-cols-2" style="gap: 1.5rem; margin-bottom: 2rem;">
+      <!-- Breakfast -->
+      <div class="card" id="card-meal-breakfast">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+          <h3 style="margin: 0;">🍳 Breakfast</h3>
+          <span id="cals-meal-breakfast" style="font-weight: 700; color: var(--accent);">0.0 kcal</span>
+        </div>
+        <div id="items-meal-breakfast" style="min-height: 60px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+          No items logged yet.
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="openAddFoodModal('breakfast')">
+          + Add Breakfast Item
+        </button>
+      </div>
+
+      <!-- Lunch -->
+      <div class="card" id="card-meal-lunch">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+          <h3 style="margin: 0;">🥗 Lunch</h3>
+          <span id="cals-meal-lunch" style="font-weight: 700; color: var(--accent);">0.0 kcal</span>
+        </div>
+        <div id="items-meal-lunch" style="min-height: 60px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+          No items logged yet.
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="openAddFoodModal('lunch')">
+          + Add Lunch Item
+        </button>
+      </div>
+
+      <!-- Dinner -->
+      <div class="card" id="card-meal-dinner">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+          <h3 style="margin: 0;">🍲 Dinner</h3>
+          <span id="cals-meal-dinner" style="font-weight: 700; color: var(--accent);">0.0 kcal</span>
+        </div>
+        <div id="items-meal-dinner" style="min-height: 60px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+          No items logged yet.
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="openAddFoodModal('dinner')">
+          + Add Dinner Item
+        </button>
+      </div>
+
+      <!-- Snack -->
+      <div class="card" id="card-meal-snack">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+          <h3 style="margin: 0;">🍎 Snacks</h3>
+          <span id="cals-meal-snack" style="font-weight: 700; color: var(--accent);">0.0 kcal</span>
+        </div>
+        <div id="items-meal-snack" style="min-height: 60px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+          No items logged yet.
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="openAddFoodModal('snack')">
+          + Add Snack Item
+        </button>
+      </div>
+    </div>
+
+    <!-- Smart Food Recommendations -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+          <h2>💡 Smart Food Recommendations</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            Goal-aligned meal and snack ideas calibrated for your remaining daily calories.
+          </p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2" id="recommendations-container" style="gap: 1rem;">
+        <div style="color: var(--text-muted); font-size: 0.9rem;">Loading recommendations...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for Manual Food Item Addition -->
+  <div id="add-food-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 id="modal-meal-title" style="margin: 0;">Add Food Item</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeAddFoodModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-food-select">Select Staple Food (or type custom)</label>
+        <select id="modal-food-select" onchange="onModalFoodSelect(this.value)">
+          <!-- Options populated from catalogue -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-food-name">Food Name</label>
+        <input type="text" id="modal-food-name">
+      </div>
+
+      <div class="form-group">
+        <label for="modal-quantity">Portion / Serving Size</label>
+        <input type="text" id="modal-quantity" value="1 serving">
+      </div>
+
+      <div class="grid grid-cols-4" style="gap: 0.5rem;">
+        <div class="form-group">
+          <label for="modal-cals">Calories</label>
+          <input type="number" id="modal-cals" min="0" step="1">
+        </div>
+        <div class="form-group">
+          <label for="modal-p">Protein (g)</label>
+          <input type="number" id="modal-p" min="0" step="0.5">
+        </div>
+        <div class="form-group">
+          <label for="modal-c">Carbs (g)</label>
+          <input type="number" id="modal-c" min="0" step="0.5">
+        </div>
+        <div class="form-group">
+          <label for="modal-f">Fat (g)</label>
+          <input type="number" id="modal-f" min="0" step="0.5">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; margin-top: 1rem;">
+        <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeAddFoodModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" style="flex: 1;" onclick="saveModalFoodItem()">Add to Meal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <div class="mobile-bottom-nav">
+    <a href="/static/dashboard.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/static/workouts.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🏋️</span>
+      <span>Workouts</span>
+    </a>
+    <a href="/static/nutrition.html" class="mobile-nav-item active">
+      <span class="mobile-nav-icon">🥗</span>
+      <span>Nutrition</span>
+    </a>
+    <a href="/static/ai_agent.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>
+      <span>AI Agent</span>
+    </a>
+    <a href="/static/live.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">⚡</span>
+      <span>Live</span>
+    </a>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/nutrition.js"></script>
+  <script src="/static/js/pwa.js"></script>
+</body>
+</html>

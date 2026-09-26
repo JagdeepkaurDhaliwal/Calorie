@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalorieCast">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <title>CalorieCast — AI Live Fitness, Nutrition & Calorie Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html" class="active">Home</a>
+      <a href="/static/dashboard.html">Dashboard</a>
+      <a href="/static/workouts.html">Workouts</a>
+      <a href="/static/nutrition.html">Nutrition & Food AI</a>
+      <a href="/static/ai_agent.html">AI Fitness Agent</a>
+      <a href="/static/live.html">Live Workout</a>
+      <a href="/static/predict.html">Quick Predict</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main>
+    <div class="page-title" style="text-align: center; margin: 2.5rem 0 1.5rem 0;">
+      <h1 style="font-size: 2.6rem; margin-bottom: 0.8rem;">Complete Fitness, Nutrition & AI Intelligence</h1>
+      <p style="font-size: 1.1rem; max-width: 760px; margin: 0 auto; color: var(--text-muted);">
+        Interactive body-part calorie mapping, custom strength & cardio tracking, AI food image analysis, dynamic meal logging, personalized fitness agents, and real-time live telemetry.
+      </p>
+      <div style="margin-top: 1.8rem; display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;">
+        <a href="/static/dashboard.html" class="btn btn-primary" style="font-size: 1rem; padding: 0.7rem 1.6rem;">📊 Open Body Map & Dashboard</a>
+        <a href="/static/workouts.html" class="btn btn-secondary" style="font-size: 1rem; padding: 0.7rem 1.6rem;">🏋️ Log Workouts</a>
+        <a href="/static/nutrition.html" class="btn btn-secondary" style="font-size: 1rem; padding: 0.7rem 1.6rem;">📷 Scan Food with AI</a>
+      </div>
+    </div>
+
+    <!-- Feature Grid -->
+    <div class="grid grid-cols-3" style="margin-top: 2.5rem; gap: 1.2rem;">
+      <div class="card">
+        <h3>🔴 Interactive Body Calorie Map</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Interactive anatomical human body figure visually highlights target muscles in <strong>RED</strong> (<span style="color:#ef4444;">#ef4444</span>) and computes exact calories burned per body part.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🏋️ Custom Strength & Cardio Workouts</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Log sets, reps, and resistance with biomechanical work-volume calculation, or track cardio runs, cycles, and rows with ML burn rates.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>📷 AI Food Calorie Scanner</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Upload or snap food photos. AI vision estimates food portions, calories, and macronutrients (protein, carbs, fat) with review & edit before saving.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🥗 Nutrition & Calorie Tracking</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Monitor Target vs. Consumed vs. Remaining calories with status warnings and smart food recommendations tailored to your goals.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>🤖 AI Fitness & Nutrition Agent</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Generate Mode 1 (General Maintenance) and Mode 2 (Personalized BMR/TDEE Blueprint) plans, and chat interactively with your AI coach.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>⚡ Real-Time Live Telemetry</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Stream live WebSocket heart rate readings with real-time calorie accumulation and live anatomical red-muscle visualization.
+        </p>
+      </div>
+    </div>
+
+    <!-- Admin MLOps section -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3>🛠️ Admin MLOps Pipeline & Model Versioning</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1rem;">
+        Administrators can upload new exercise datasets, retrain across 4 regression algorithms (Linear, Random Forest, KNN, ANN/MLP), evaluate champion models on a frozen holdout set, and promote new models automatically.
+      </p>
+      <a href="/static/admin.html" class="btn btn-secondary btn-sm">Go to Admin MLOps Portal</a>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <div class="mobile-bottom-nav">
+    <a href="/static/dashboard.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/static/workouts.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🏋️</span>
+      <span>Workouts</span>
+    </a>
+    <a href="/static/nutrition.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🥗</span>
+      <span>Nutrition</span>
+    </a>
+    <a href="/static/ai_agent.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>
+      <span>AI Agent</span>
+    </a>
+    <a href="/static/live.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">⚡</span>
+      <span>Live</span>
+    </a>
+  </div>
+
+  <footer style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 2rem;">
+    CalorieCast — Complete AI Fitness, Exercise & Nutrition Application &copy; 2026
+  </footer>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/pwa.js"></script>
+</body>
+</html>

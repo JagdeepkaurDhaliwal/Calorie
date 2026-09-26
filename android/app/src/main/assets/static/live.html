@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalorieCast">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <title>Live Telemetry Workout — CalorieCast</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html">Home</a>
+      <a href="/static/dashboard.html">Dashboard</a>
+      <a href="/static/workouts.html">Workouts</a>
+      <a href="/static/nutrition.html">Nutrition & Food AI</a>
+      <a href="/static/ai_agent.html">AI Fitness Agent</a>
+      <a href="/static/live.html" class="active">Live Workout</a>
+      <a href="/static/predict.html">Quick Predict</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main style="max-width: 900px; margin: 0 auto;">
+    <div class="page-title" style="text-align: center;">
+      <h1>Simulated Live Workout Session</h1>
+      <p>Stream real-time heart rate readings via WebSocket, observe dynamic calorie accumulation, and view real-time muscle highlighting.</p>
+    </div>
+
+    <!-- Pre-session setup -->
+    <div class="card" id="pre-session-card">
+      <h2>Session Configuration</h2>
+
+      <div class="grid grid-cols-2" style="gap: 1rem;">
+        <div class="form-group">
+          <label for="live-body-part">Target Body Part</label>
+          <select id="live-body-part" onchange="updateLiveExerciseOptions(this.value)">
+            <option value="legs">Legs (Quads / Running / Cycling)</option>
+            <option value="chest">Chest (Pectorals / Pressing)</option>
+            <option value="back">Back (Lats / Rowing)</option>
+            <option value="shoulders">Shoulders (Deltoids)</option>
+            <option value="biceps">Biceps (Arms)</option>
+            <option value="triceps">Triceps (Arms)</option>
+            <option value="full_body">Full Body (HIIT / Elliptical / Jump Rope)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="live-exercise-name">Exercise Activity</label>
+          <input type="text" id="live-exercise-name" value="Treadmill Running" placeholder="e.g. Treadmill Running, Bench Press">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2" style="gap: 1rem;">
+        <div class="form-group">
+          <label for="live-body-temp">Initial Body Temperature (°C, optional)</label>
+          <input type="number" step="0.1" id="live-body-temp" min="35" max="42" placeholder="Default: Dynamic estimator (38.0°C)">
+        </div>
+        <div class="form-group">
+          <label for="simulation-pace">Simulated Heart Rate Trend</label>
+          <select id="simulation-pace">
+            <option value="moderate" selected>Moderate Pace (~110–135 bpm)</option>
+            <option value="high">High Intensity / HIIT (~140–175 bpm)</option>
+            <option value="light">Light Recovery (~85–110 bpm)</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 0.8rem;" onclick="startWorkout()">
+        🚀 Start Live Workout
+      </button>
+    </div>
+
+    <!-- Active workout telemetry -->
+    <div class="card" id="active-session-card" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span class="pulsing-heart">❤️</span>
+          <span style="font-weight: 700; font-size: 1.2rem; margin-left: 0.5rem;" id="live-current-hr">-- bpm</span>
+        </div>
+        <div>
+          <span class="stat-label">Elapsed: </span>
+          <strong id="live-timer" style="font-size: 1.4rem; color: var(--accent);">00:00</strong>
+        </div>
+        <div>
+          <span id="live-intensity-badge" class="badge badge-low">LOW</span>
+        </div>
+      </div>
+
+      <!-- Active exercise & real-time body map -->
+      <div class="grid grid-cols-2" style="align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <!-- Left: Interactive Body Map with Target Highlighted in RED -->
+        <div class="card" style="background: var(--bg-primary); text-align: center; padding: 1rem;">
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">Active Target Muscle</div>
+          <h3 id="live-active-part-title" style="margin: 0 0 0.8rem 0; color: #ef4444;">LEGS 🔴</h3>
+          <div id="live-body-map-container" style="max-width: 180px; margin: 0 auto;">
+            <!-- Body map rendered here -->
+          </div>
+        </div>
+
+        <!-- Right: Real-time Calorie Burn -->
+        <div style="text-align: center;">
+          <div class="stat-label" style="font-size: 1.1rem;">Cumulative Calories Burnt</div>
+          <div class="stat-value" id="live-calories" style="font-size: 4rem; margin: 0.8rem 0; color: #ef4444;">
+            0.00 <span style="font-size: 1.4rem; color: var(--text-muted);">kcal</span>
+          </div>
+          <div style="font-size: 0.95rem; color: var(--accent); font-weight: 600;" id="live-exercise-label">
+            Active: Treadmill Running
+          </div>
+
+          <div class="grid grid-cols-2" style="gap: 0.8rem; margin-top: 1.2rem;">
+            <div class="card stat-card" style="background-color: var(--bg-primary); padding: 0.8rem;">
+              <div class="stat-label">Average HR</div>
+              <div class="stat-value" id="live-avg-hr" style="font-size: 1.4rem;">-- bpm</div>
+            </div>
+            <div class="card stat-card" style="background-color: var(--bg-primary); padding: 0.8rem;">
+              <div class="stat-label">Telemetry Stream</div>
+              <div class="stat-value" id="live-status-mode" style="font-size: 1rem; color: var(--success); margin-top: 0.4rem;">
+                LIVE (WS)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-danger" style="width: 100%; font-size: 1.1rem; padding: 0.8rem;" onclick="endWorkout()">
+        ⏹️ End Workout & Save
+      </button>
+    </div>
+
+    <!-- Post-workout summary -->
+    <div class="card" id="summary-card" style="display: none; text-align: center;">
+      <h2 style="color: var(--success);">🎉 Workout Completed!</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;" id="summary-msg">
+        The session has been finalized and recorded in your workout history and Today's Body Calorie Map.
+      </p>
+
+      <div class="grid grid-cols-3" style="margin-bottom: 1.5rem;">
+        <div class="card stat-card" style="background-color: var(--bg-primary);">
+          <div class="stat-label">Total Burn</div>
+          <div class="stat-value" id="sum-total-cal" style="font-size: 2rem; color: #ef4444;">-- kcal</div>
+        </div>
+        <div class="card stat-card" style="background-color: var(--bg-primary);">
+          <div class="stat-label">Total Duration</div>
+          <div class="stat-value" id="sum-duration" style="font-size: 2rem;">-- min</div>
+        </div>
+        <div class="card stat-card" style="background-color: var(--bg-primary);">
+          <div class="stat-label">Avg Heart Rate</div>
+          <div class="stat-value" id="sum-avg-hr" style="font-size: 2rem;">-- bpm</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="resetLiveUI()">Start Another Workout</button>
+        <a href="/static/dashboard.html" class="btn btn-secondary">View Body Calorie Map</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <div class="mobile-bottom-nav">
+    <a href="/static/dashboard.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/static/workouts.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🏋️</span>
+      <span>Workouts</span>
+    </a>
+    <a href="/static/nutrition.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🥗</span>
+      <span>Nutrition</span>
+    </a>
+    <a href="/static/ai_agent.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>
+      <span>AI Agent</span>
+    </a>
+    <a href="/static/live.html" class="mobile-nav-item active">
+      <span class="mobile-nav-icon">⚡</span>
+      <span>Live</span>
+    </a>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/body_map.js"></script>
+  <script src="/static/js/live.js"></script>
+  <script src="/static/js/pwa.js"></script>
+</body>
+</html>

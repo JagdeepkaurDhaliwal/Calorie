@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalorieCast">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/static/icons/favicon.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <title>Quick Calorie Predictor — CalorieCast</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header>
+    <a href="/static/index.html" class="brand">🔥 CalorieCast</a>
+    <nav id="nav-links">
+      <a href="/static/index.html">Home</a>
+      <a href="/static/dashboard.html">Dashboard</a>
+      <a href="/static/workouts.html">Workouts</a>
+      <a href="/static/nutrition.html">Nutrition & Food AI</a>
+      <a href="/static/ai_agent.html">AI Fitness Agent</a>
+      <a href="/static/live.html">Live Workout</a>
+      <a href="/static/predict.html" class="active">Quick Predict</a>
+    </nav>
+    <div id="nav-user"></div>
+  </header>
+
+  <main>
+    <div class="page-title">
+      <h1>Single Workout Calorie Predictor</h1>
+      <p>Enter physiological and workout parameters with flexible units to calculate ML-estimated calorie expenditure.</p>
+    </div>
+
+    <div class="grid grid-cols-2">
+      <!-- Form Card -->
+      <div class="card">
+        <h2>Workout Parameters</h2>
+        <form id="predict-form" onsubmit="handlePredict(event)">
+          <div class="grid grid-cols-2" style="gap: 1rem;">
+            <div class="form-group">
+              <label for="gender">Gender</label>
+              <select id="gender" required>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="age">Age (years, 10–100)</label>
+              <input type="number" id="age" min="10" max="100" required value="28">
+            </div>
+          </div>
+
+          <!-- Height with Unit Selector -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+              <label for="height" style="margin: 0;">Height</label>
+              <div style="display: flex; gap: 0.3rem;">
+                <label style="font-size: 0.75rem; font-weight: normal;"><input type="radio" name="height_unit" value="cm" checked onchange="toggleHeightUnit('cm')"> cm</label>
+                <label style="font-size: 0.75rem; font-weight: normal;"><input type="radio" name="height_unit" value="ft" onchange="toggleHeightUnit('ft')"> ft/in</label>
+              </div>
+            </div>
+            <div id="height-cm-group">
+              <input type="number" step="0.1" id="height" min="100" max="250" value="175.0">
+            </div>
+            <div id="height-ft-group" style="display: none; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <input type="number" id="height_feet" min="3" max="8" placeholder="Feet" value="5">
+              <input type="number" step="0.1" id="height_inches" min="0" max="11.9" placeholder="Inches" value="9">
+            </div>
+          </div>
+
+          <!-- Weight with Unit Selector -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+              <label for="weight" style="margin: 0;">Weight</label>
+              <div style="display: flex; gap: 0.3rem;">
+                <label style="font-size: 0.75rem; font-weight: normal;"><input type="radio" name="weight_unit" value="kg" checked onchange="toggleWeightUnit('kg')"> kg</label>
+                <label style="font-size: 0.75rem; font-weight: normal;"><input type="radio" name="weight_unit" value="lbs" onchange="toggleWeightUnit('lbs')"> lbs</label>
+              </div>
+            </div>
+            <input type="number" step="0.1" id="weight" min="20" max="500" required value="72.0">
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border); margin: 1rem 0;">
+
+          <!-- Duration with flexible hours/minutes -->
+          <div class="form-group">
+            <label for="duration">Duration (minutes)</label>
+            <input type="number" step="0.1" id="duration" min="1" max="300" required value="30.0">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Training set was 1–30 min. Higher durations will trigger extrapolation warnings.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="heart_rate">Heart Rate (bpm, 40–220)</label>
+            <input type="number" step="0.1" id="heart_rate" min="40" max="220" required value="125.0">
+          </div>
+
+          <!-- Body Temp with Unit Selector -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+              <label for="body_temp" style="margin: 0;">Body Temperature</label>
+              <div style="display: flex; gap: 0.3rem;">
+                <label style="font-size: 0.75rem; font-weight: normal;"><input type="radio" name="temp_unit" value="C" checked onchange="toggleTempUnit('C')"> °C</label>
+                <label style="font-size: 0.75rem; font-weight: normal;"><input type="radio" name="temp_unit" value="F" onchange="toggleTempUnit('F')"> °F</label>
+              </div>
+            </div>
+            <input type="number" step="0.1" id="body_temp" min="35" max="108" required value="38.5">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Predict Calories</button>
+        </form>
+      </div>
+
+      <!-- Result Card -->
+      <div class="card" id="result-container" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+        <div id="result-placeholder">
+          <p style="color: var(--text-muted); font-size: 1.1rem;">
+            Fill in the parameters and click <strong>Predict Calories</strong> to view results.
+          </p>
+        </div>
+
+        <div id="result-content" style="display: none;">
+          <h3>Prediction Result</h3>
+          <div class="stat-value" id="res-calories" style="font-size: 3.5rem; margin: 1rem 0; color: #ef4444;">-- kcal</div>
+          <div style="margin-bottom: 1.5rem;">
+            <span class="stat-label">Intensity Level: </span>
+            <span id="res-intensity" class="badge">--</span>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            Calculated via Active Model <strong>v<span id="res-version">1</span></strong>
+          </div>
+
+          <div id="warnings-box" style="display: none; text-align: left;" class="alert alert-warning">
+            <strong>⚠️ Extrapolation Warning:</strong>
+            <ul id="warnings-list" style="margin-top: 0.5rem; padding-left: 1.2rem;"></ul>
+          </div>
+
+          <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+            <a href="/static/dashboard.html" class="btn btn-secondary btn-sm">Go to Dashboard</a>
+            <a href="/static/workouts.html" class="btn btn-primary btn-sm">Log in Body Map</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <div class="mobile-bottom-nav">
+    <a href="/static/dashboard.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/static/workouts.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🏋️</span>
+      <span>Workouts</span>
+    </a>
+    <a href="/static/nutrition.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🥗</span>
+      <span>Nutrition</span>
+    </a>
+    <a href="/static/ai_agent.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>
+      <span>AI Agent</span>
+    </a>
+    <a href="/static/live.html" class="mobile-nav-item">
+      <span class="mobile-nav-icon">⚡</span>
+      <span>Live</span>
+    </a>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/predict.js"></script>
+  <script src="/static/js/pwa.js"></script>
+</body>
+</html>

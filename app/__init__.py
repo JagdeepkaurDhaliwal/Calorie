@@ -1,0 +1,1 @@
+"""CalorieCast FastAPI application package."""

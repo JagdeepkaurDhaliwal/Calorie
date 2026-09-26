@@ -1,0 +1,62 @@
+{
+  "name": "CalorieCast — AI Fitness & Nutrition",
+  "short_name": "CalorieCast",
+  "description": "Interactive body calorie mapping, custom workout tracking, AI food image analysis, nutrition plans, and real-time live telemetry.",
+  "start_url": "/static/dashboard.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "categories": ["fitness", "health", "lifestyle", "sports"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Body Map",
+      "short_name": "Body Map",
+      "description": "View calorie burn per muscle group",
+      "url": "/static/dashboard.html",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Log Workout",
+      "short_name": "Workouts",
+      "description": "Log strength sets, reps & cardio",
+      "url": "/static/workouts.html",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Scan Food with AI",
+      "short_name": "Food AI",
+      "description": "Scan food photos for calorie estimates",
+      "url": "/static/nutrition.html",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live Workout Telemetry",
+      "short_name": "Live",
+      "description": "Stream real-time workout heart rate",
+      "url": "/static/live.html",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
