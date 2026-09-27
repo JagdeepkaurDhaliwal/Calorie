@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    database_url: str = "sqlite:///./caloriecast.db"
+    database_url: str = "sqlite:////tmp/caloriecast.db" if os.environ.get("VERCEL") else "sqlite:///./caloriecast.db"
     jwt_secret: str = "change-me"
     jwt_expire_minutes: int = 60
     admin_email: str = "admin@example.com"
