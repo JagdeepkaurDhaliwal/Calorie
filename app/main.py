@@ -107,8 +107,8 @@ def health_check():
     return HealthResponse(status="ok", active_model_version=active_version)
 
 
-uploads_dir = ROOT_DIR / "uploads"
-uploads_dir.mkdir(exist_ok=True)
+uploads_dir = Path("/tmp/uploads") if os.environ.get("VERCEL") else ROOT_DIR / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 frontend_dir = ROOT_DIR / "frontend"
