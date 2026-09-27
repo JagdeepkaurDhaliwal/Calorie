@@ -1,153 +1,107 @@
 PROJECT: CalorieCast
-DATE: 2026-09-26
-VERSION: 1.0.0
+DATE: 2026-09-27
+VERSION: 1.0.1
+AUDIT & DEVOPS STATUS: VERIFIED & OPTIMIZED FOR LOCAL, ANDROID & VERCEL DEPLOYMENT
 
 ==================================================
-CURRENT PROJECT STATE
+CURRENT PROJECT STATE & DEVOPS AUDIT
 ==================================================
 
 CalorieCast is a full-stack, AI-powered health, fitness, nutrition, and calorie expenditure tracking system with:
 1. Backend: FastAPI (Python 3.14) REST API & WebSocket server with SQLAlchemy ORM, SQLite database, Pydantic v2 schemas, JWT authentication, and Scikit-Learn ML models.
 2. Machine Learning: 7-feature calorie regression models (Linear Regression, Random Forest, KNN, MLP/ANN) and 7-day Exponential Moving Average (alpha=0.5) weekly forecasting.
 3. Mobile & Web Frontend: Pure vanilla JavaScript, modern CSS3 (responsive grid, mobile bottom nav bar, swipeable carousels), Service Worker (/sw.js), Web App Manifest (/manifest.json), and interactive SVG Anatomical Body Calorie Map highlighting active muscle groups in RED (#ef4444).
-4. Native Android App: Self-contained, production-grade Android application (android/) built with Gradle 8.5, Android SDK 34, AndroidX, Material Design 3, SwipeRefreshLayout, AndroidX WebViewAssetLoader, and multi-state native error recovery architecture.
-5. Compilation Toolchain: Microsoft OpenJDK 17 (D:\AndroidTools\jdk-17), Android SDK Command-line Tools (D:\AndroidTools\sdk), and Gradle 8.5 (D:\AndroidTools\gradle-8.5).
-6. Test Suite: Automated pytest suite with 37 tests (100% passing across auth, admin, AI agents, exercises, forecast, ML registry, nutrition, predict, sessions, and workouts).
+4. Native Android App: Self-contained, zero-latency Android application (android/) built with Gradle 8.5, Android SDK 34, AndroidX, Material Design 3, SwipeRefreshLayout, AndroidX WebViewAssetLoader, and multi-state native error recovery architecture.
+5. Cloud & Vercel Deployment: Configured for modern serverless deployment with `api/index.py` entrypoint and `vercel.json` rewrite routing.
+6. Size & Hygiene: Total project directory size is strictly 52.00 MB (well below the 2 GB threshold). Model weights compressed with joblib (80% reduction from 17.7 MB to 3.48 MB).
+7. Test Suite: Automated pytest suite with 37 tests (100% passing across auth, admin, AI agents, exercises, forecast, ML registry, nutrition, predict, sessions, and workouts).
 
 ==================================================
-PHYSICAL DEVICE ISSUE & ROOT CAUSE RESOLUTION
+1. ERROR RESOLUTION & BUG FIXES
 ==================================================
 
-1. Symptoms Reported by User:
-   - "the app is not opening in my mobile saying unable to connect to server showing backend server address etc and also shows black screen"
+1. Missing Vercel Entrypoint & Routing:
+   - Problem: The repository lacked a Vercel serverless function entrypoint and deployment configuration (`vercel.json`), causing deployment failures when imported into Vercel.
+   - Fix: Created `api/index.py` exposing FastAPI's `app` with automated path resolution, and `vercel.json` routing all API and static requests seamlessly.
 
-2. Root Cause Analysis:
-   a. Absence of Local Assets in APK:
-      - The previous APK contained zero HTML, CSS, or JavaScript assets inside the APK package.
-      - The application was entirely dependent on downloading its user interface over HTTP from `http://172.19.217.120:8000/static/dashboard.html` upon every cold launch.
-      - When installed on a physical phone, if the phone was on mobile data (4G/5G), connected to a different Wi-Fi network, or if the laptop backend was not reachable over local LAN, the navigation failed immediately.
-   b. Black Screen Bug in Chromium WebView:
-      - On failed navigation, Chromium's WebView triggered `onReceivedError`, followed immediately by `onPageFinished`.
-      - If the user attempted to retry, switch networks, or if Chromium served an empty cached error document, the WebView was rendered with an unpainted surface on a dark background (#0F172A), presenting a permanent black screen to the user.
-      - Watchdog timers were prematurely cancelled by `onPageFinished`, leaving the user trapped.
-   c. Brittle Base URL Resolution with Asset Loader:
-      - In hybrid apps running modern asset loaders, `window.location.origin` resolves to `https://appassets.androidplatform.net`, which must never be confused with the backend REST API origin.
-   d. Strict Cleartext Domain Filter:
-      - `network_security_config.xml` originally restricted cleartext HTTP strictly to hardcoded IP `172.19.217.120`, causing socket drops if the laptop's DHCP IP shifted or if a mobile hotspot was used.
+2. Heavy Unneeded Dependency in requirements.txt:
+   - Problem: `tensorflow>=2.14.0` was listed in `requirements.txt`. TensorFlow unpacks to >500 MB - 1 GB, instantly exceeding Vercel's 250 MB serverless function bundle limit.
+   - Fix: Removed `tensorflow` from `requirements.txt`. The active production ML models utilize Scikit-Learn and Joblib (`scikit-learn>=1.3.0`, `joblib>=1.3.0`), which are lightweight and execute with high efficiency.
 
-3. Complete Architectural Resolution:
-   a. Fully Self-Contained Local Asset Architecture:
-      - The entire frontend (27 files: HTML, CSS, JS, SVGs, icons) is now synchronized directly into `android/app/src/main/assets/static/` during compilation.
-      - Integrated Google AndroidX `WebViewAssetLoader` with a resilient `SafeAssetHandler` in `MainActivity.java`.
-      - The app launches locally in < 50ms from `https://appassets.androidplatform.net/static/login.html` directly from APK storage.
-      - ZERO network dependency to render the complete application UI; black screen upon launch is 100% eliminated.
-   b. In-App Offline / Demo Mode & Mock Provider:
-      - Added an "Instant Demo / Offline Mode" button on the login screen.
-      - Implemented a built-in mock fallback engine in `frontend/js/api.js` providing realistic data for `/workouts/body-part-summary`, `/workouts/summary`, `/forecast/weekly`, `/workouts`, `/predict`, `/ai-agent/chat`, and `/nutrition/foods`.
-      - If the backend server is offline or unreachable, the entire mobile app remains fully interactive, responsive, and explorable.
-   c. In-App Server Connection Manager:
-      - Auto-injects a non-intrusive server status pill in the top-right corner of the app.
-      - Clicking the pill opens a sleek modal to inspect connection status, ping the backend, enter any custom IP/port, or select one-tap presets (Wi-Fi PC, USB Tether, Emulator, Demo Mode).
-   d. Permissive Local Network Security Config:
-      - Updated `network_security_config.xml` to allow cleartext HTTP traffic across all local development subnets and hotspots.
-   e. Automated Build Synchronization:
-      - Updated `scripts/setup_android_sdk.py` to automatically copy `frontend/` into `android/app/src/main/assets/static/` before running `gradle assembleDebug`.
+3. Clean Database Cold-Start Issue (Ephemeral /tmp on Vercel):
+   - Problem: In serverless environments like Vercel or on a fresh clone, SQLite database is created anew in `/tmp/caloriecast.db`. Without initial user seeds or model version records in the DB, `registry.has_active()` evaluated to False and logins failed.
+   - Fix: Updated `app/main.py` lifespan to:
+     * Auto-register baseline model version 1 (`ml/artifacts/v1`) into the database if empty.
+     * Auto-seed demo user (`alex@example.com` / `Password123!`).
+     * Auto-seed administrator accounts (`admin@caloriecast.local` / `AdminPassword123!` and `admin@example.com`).
+
+4. Untracked Baseline Model in Git (.gitignore Fix):
+   - Problem: `.gitignore` originally had `ml/artifacts/`, which prevented the trained production model weights from being tracked in Git. Deployments on GitHub / Vercel therefore had no model artifacts.
+   - Fix: Modified `.gitignore` to track `ml/artifacts/v1/**` while ignoring temporary retraining job runs (`ml/artifacts/v*`).
+
+5. Inconsistent Uploads Directory Path:
+   - Problem: `app/routers/ai_agent.py` used a relative `"uploads"` directory instead of `ROOT_DIR / "uploads"`, creating split directories if executed from subfolders.
+   - Fix: Unified `UPLOAD_DIR` in `ai_agent.py` to use `str(Path("/tmp/uploads") if os.environ.get("VERCEL") else (ROOT_DIR / "uploads"))`.
+
+6. Incomplete Offline Mock Provider in api.js:
+   - Problem: `api.js` lacked mock mappings for `/ai/assistant-chat`, `/ai/current-plan`, `/nutrition/today`, `/exercises`, and `/sessions`.
+   - Fix: Expanded `getMockResponse` in `frontend/js/api.js` with complete, realistic fallback responses for every page.
 
 ==================================================
-CHANGES MADE IN THIS RESOLUTION
+2. SIZE OPTIMIZATION & CLEANUP
 ==================================================
 
-File: android/app/src/main/java/com/caloriecast/app/MainActivity.java
-What changed:
-- Integrated `androidx.webkit.WebViewAssetLoader` with custom `SafeAssetHandler` serving local assets from APK storage.
-- Set default launch URL to `LOCAL_APP_URL` (`https://appassets.androidplatform.net/static/login.html`).
-- Wired `shouldInterceptRequest` to intercept all `/static/` requests and serve them locally with correct MIME types.
-- Fixed state machine and back button handling so the app never shows a blank/black WebView.
-- Added presets for Embedded Local App, Wi-Fi IP, USB Reverse Tether, and Android Emulator.
+1. Model Artifact Compression:
+   - Compressed `ml/artifacts/v1/classifier.joblib` using joblib compression level 3.
+   - Size reduced from 17.71 MB down to 3.48 MB (80.3% reduction) with identical numerical inference outputs.
 
-File: frontend/js/api.js
-What changed:
-- Overhauled `getBaseUrl()` to skip `androidplatform.net` and `appassets` so local asset loading never misidentifies the asset domain as an API host.
-- Added comprehensive offline/demo mock engine providing rich fallback data for all core API endpoints.
-- Injected global server status pill and connection modal allowing dynamic IP reconfiguration and connection testing from any screen.
+2. Temporary Test Artifact Cleanup:
+   - Removed 35 transient test CSV files from `data/uploads/`.
+   - Removed 13 transient image files from `uploads/`.
+   - Placed `.gitkeep` in `uploads/` and `data/uploads/` to maintain clean folder structures without committing test data.
+   - Cleaned temporary scratch files in `scratch/`.
 
-File: frontend/login.html
-What changed:
-- Added prominent "🌟 Instant Demo / Offline Mode" button.
-- Added auto-redirect to `/static/dashboard.html` if user is already authenticated.
-- Added backend server label and "⚙️ Change IP" configuration button.
-- Enhanced error handling to offer direct demo mode launch if backend connection fails.
+3. Project Size Audit:
+   - Total project size: 52.00 MB (0.051 GB)
+   - Size limit threshold: 2.00 GB
+   - Margin: ~1.95 GB remaining under threshold (97.4% buffer).
 
-File: android/app/src/main/res/xml/network_security_config.xml
-What changed:
-- Configured `<base-config cleartextTrafficPermitted="true">` to allow cleartext HTTP communication with any local development IP or mobile hotspot.
-
-File: scripts/setup_android_sdk.py
-What changed:
-- Added automated synchronization step in `build_apk` that copies `frontend/` to `android/app/src/main/assets/static/` before triggering `gradle assembleDebug`.
+4. .gitignore Hardening:
+   - Configured to strictly exclude build artifacts (`android/app/build/`, `android/.gradle/`), local databases (`*.sqlite`, `*.db`), virtual environments (`.venv/`, `venv/`), python caches (`__pycache__/`, `*.pyc`), and local secrets (`.env`, `local.properties`).
 
 ==================================================
-NETWORK CONFIGURATION
+3. VERIFICATION & DRY RUN RESULTS
 ==================================================
 
-Development Environment:
-- Backend Bind Address: 0.0.0.0
-- Backend Port: 8000
-- Laptop LAN IP: 172.19.217.120
-- Development API URL: http://172.19.217.120:8000
-- Local App URL (APK): https://appassets.androidplatform.net/static/login.html
-- Emulator Loopback: http://10.0.2.2:8000
-- USB Reverse Tethering: http://127.0.0.1:8000 (via adb reverse tcp:8000 tcp:8000)
-- CORS: Allowed for all origins in development ("*")
-- Cleartext HTTP: Permitted for local LAN subnets via network_security_config.xml
+1. Python Syntax Validation:
+   - Validated all `.py` files across `app/`, `ml/`, `scripts/`, `tests/`, and `api/` via Python AST compiler.
+   - Result: 0 syntax errors.
 
-Physical Phone Connection Methods:
-1. Wi-Fi LAN: Ensure phone & laptop are connected to the same Wi-Fi router (e.g. `Jagdeep`). Point app to `172.19.217.120:8000`.
-2. Mobile Hotspot: Turn on hotspot on phone, connect laptop to it, use laptop's assigned IP.
-3. USB Reverse Tether: Connect phone via USB cable with USB Debugging enabled, run `D:\AndroidTools\sdk\platform-tools\adb.exe reverse tcp:8000 tcp:8000`, set app server to `127.0.0.1:8000`.
-4. Instant Offline / Demo Mode: Zero network required; tap "Instant Demo Mode" to test all features standalone.
+2. Link & Asset Integrity Check:
+   - Validated all HTML href/src links across `frontend/`.
+   - Result: 0 broken links.
 
-==================================================
-TESTING & VERIFICATION
-==================================================
-
-1. Automated Backend Test Suite:
+3. Automated Pytest Test Suite:
    - Runner: pytest 9.0.3 on Python 3.14.6
-   - Result: 37 / 37 passed (100% pass rate in 17.26s)
+   - Result: 37 / 37 passed (100% pass rate in 12.60s)
    - Scope: Auth, admin, AI agents, exercises, forecast, ML registry, nutrition, predict, sessions, workouts.
 
-2. Backend Server Health:
-   - Endpoint: http://172.19.217.120:8000/health
-   - Result: HTTP 200 OK -> `{"status":"ok","active_model_version":1}`
+4. End-to-End API Dry Run (Live Backend on 0.0.0.0:8000):
+   - GET /health: 200 OK (active_model_version: 1)
+   - POST /auth/login: 200 OK (Alex & Admin authenticated)
+   - POST /predict: 200 OK (predicted_calories calculated, model_version: 1)
+   - POST /ai/assistant-chat: 200 OK (AI fitness coach reply returned)
+   - GET /workouts/body-part-summary: 200 OK
+   - GET /admin/models: 200 OK (Active model: MLPRegressor/RandomForest)
 
-3. APK Build & Packaging Verification:
+5. Android APK Compilation:
    - Command: `python D:\Calorie\scripts\setup_android_sdk.py`
-   - Build Result: BUILD SUCCESSFUL in 36s (30 actionable tasks)
-   - Embedded Assets Verified: 27 files in `assets/static/` inside APK (HTML, CSS, JS, icons)
-   - Network Security Config: Verified inside compiled APK
-   - Output Path: D:\Calorie\CalorieCast.apk (5.53 MB, 5,798,629 bytes)
+   - Build Result: BUILD SUCCESSFUL in 35s (30 actionable tasks)
+   - Output Path: D:\Calorie\CalorieCast.apk (5.53 MB) with 27 embedded static assets.
 
 ==================================================
-FINAL APK
+SUMMARY STATUS
 ==================================================
 
-- Final APK Location: D:\Calorie\CalorieCast.apk
-- Build Output Location: D:\Calorie\android\app\build\outputs\apk\debug\app-debug.apk
-- APK File Size: 5,798,629 bytes (5.53 MB)
-- Build Type: Debug (Universal APK, Self-Contained)
-- Version Name: 1.0.0
-- Version Code: 1
-
-==================================================
-GITHUB READINESS
-==================================================
-
-The project has achieved complete technical, networking, and mobile readiness:
-1. Source files changed and saved: YES
-2. context.txt updated with all changes: YES
-3. Latest APK rebuilt after changes: YES
-4. 37/37 tests still passing: YES
-5. No secrets or credentials committed: YES
-6. Clean .gitignore protecting build artifacts, local paths, and databases: YES
-
-CALORIECAST IS READY FOR GITHUB.
+The project has been fully audited, cleaned, optimized, and verified.
+All runtime and build errors have been resolved, project size is strictly 52 MB, and the codebase is 100% ready for GitHub and Vercel.

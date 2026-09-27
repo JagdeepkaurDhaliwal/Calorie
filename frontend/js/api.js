@@ -282,11 +282,77 @@ const API = {
       };
     }
 
-    if (ep === "/ai-agent/chat") {
+    if (ep === "/ai-agent/chat" || ep === "/ai/assistant-chat") {
       return {
         reply: "Great workout consistency! In demo mode, your data shows strong chest and leg training this week. Remember to maintain hydration (3L+) and prioritize 7-8 hours of sleep for optimal muscle hypertrophy and recovery.",
+        suggested_actions: ["Suggest a high-protein lunch", "Give me a 20-min HIIT workout", "How to optimize recovery?"],
         timestamp: new Date().toISOString(),
       };
+    }
+
+    if (ep === "/ai/current-plan" || ep === "/ai/general-plan" || ep === "/ai/personalized-plan") {
+      return {
+        id: 1,
+        title: "Balanced Hypertrophy & Calorie Shred",
+        summary: "Optimal 4-day split prioritizing compound movements, hypertrophy volume, and steady-state cardiovascular conditioning.",
+        daily_calorie_target: 2350,
+        workout_plan: {
+          schedule: [
+            { day: "Monday", focus: "Chest & Triceps", duration_min: 45, target_sets: "4 sets x 8-12 reps", exercises: ["Barbell Bench Press", "Incline Dumbbell Press", "Tricep Rope Pushdowns"] },
+            { day: "Tuesday", focus: "Back & Biceps", duration_min: 45, target_sets: "4 sets x 10 reps", exercises: ["Lat Pulldowns", "Bent-Over Rows", "Barbell Bicep Curls"] },
+            { day: "Thursday", focus: "Legs & Core", duration_min: 50, target_sets: "4 sets x 10-15 reps", exercises: ["Barbell Squats", "Romanian Deadlifts", "Plank & Leg Raises"] },
+            { day: "Saturday", focus: "Full Body HIIT", duration_min: 35, target_sets: "Circuit 3 rounds", exercises: ["Kettlebell Swings", "Burpees", "Rowing Machine Sprint"] },
+          ]
+        },
+        nutrition_plan: {
+          macro_distribution: { protein_pct: 30, carbs_pct: 45, fat_pct: 25 },
+          daily_protein_target_grams: 165,
+          daily_carbs_target_grams: 245,
+          daily_fat_target_grams: 65,
+          disclaimer: "⚠ Safety Disclaimer: This plan is for informational and educational guidance. Consult a healthcare professional before starting an intensive regimen."
+        }
+      };
+    }
+
+    if (ep === "/nutrition/today") {
+      return {
+        daily_target: 2200,
+        consumed_calories: 1450.0,
+        exercise_calories: 520.0,
+        net_calories: 930.0,
+        remaining_calories: 750.0,
+        status: "safe",
+        status_message: "On track! 750 kcal remaining for dinner and post-workout recovery.",
+        total_protein: 110.0,
+        total_carbs: 145.0,
+        total_fat: 45.0,
+        meals: [
+          { id: 1, name: "Rolled Oatmeal & Whey", calories: 380, protein: 32, carbs: 48, fat: 6, meal_type: "breakfast" },
+          { id: 2, name: "Grilled Chicken Breast & Rice", calories: 520, protein: 48, carbs: 55, fat: 8, meal_type: "lunch" },
+        ]
+      };
+    }
+
+    if (ep === "/exercises") {
+      return [
+        { id: 1, name: "Bench Press", body_part: "chest", exercise_type: "strength", default_duration_min: 30, met_multiplier: 6.0 },
+        { id: 2, name: "Incline Dumbbell Press", body_part: "chest", exercise_type: "strength", default_duration_min: 25, met_multiplier: 5.5 },
+        { id: 3, name: "Barbell Back Squat", body_part: "legs", exercise_type: "strength", default_duration_min: 35, met_multiplier: 7.0 },
+        { id: 4, name: "Treadmill Running", body_part: "legs", exercise_type: "cardio", default_duration_min: 30, met_multiplier: 9.8 },
+        { id: 5, name: "Lat Pulldown", body_part: "back", exercise_type: "strength", default_duration_min: 25, met_multiplier: 5.0 },
+        { id: 6, name: "Barbell Bicep Curl", body_part: "biceps", exercise_type: "strength", default_duration_min: 20, met_multiplier: 4.5 },
+        { id: 7, name: "Overhead Shoulder Press", body_part: "shoulders", exercise_type: "strength", default_duration_min: 25, met_multiplier: 5.5 },
+        { id: 8, name: "Tricep Pushdown", body_part: "triceps", exercise_type: "strength", default_duration_min: 20, met_multiplier: 4.5 },
+        { id: 9, name: "Full Body HIIT", body_part: "full_body", exercise_type: "cardio", default_duration_min: 30, met_multiplier: 8.5 },
+      ];
+    }
+
+    if (ep === "/sessions/start") {
+      return { session_id: 999, message: "Live workout simulated in Demo Mode" };
+    }
+
+    if (ep.startsWith("/sessions/") && ep.endsWith("/stop")) {
+      return { session_id: 999, total_calories: 385.5, duration_minutes: 25.0, avg_heart_rate: 142.0 };
     }
 
     if (ep === "/nutrition/foods") {

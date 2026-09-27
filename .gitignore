@@ -15,12 +15,21 @@ caloriecast.db
 *.sqlite
 *.sqlite3
 
-# Uploads & User Media
-data/uploads/
-uploads/
+# Uploads & User Media (Keep directories via .gitkeep)
+data/uploads/*.csv
+!data/uploads/.gitkeep
+uploads/*
+!uploads/.gitkeep
 data/raw/*.csv
 !data/raw/.gitkeep
-ml/artifacts/
+scratch/*
+!scratch/.gitkeep
+!scratch/*.py
+
+# Model artifacts: Ignore transient retraining runs, track baseline production model v1
+ml/artifacts/v*
+!ml/artifacts/v1/
+!ml/artifacts/v1/**
 !ml/artifacts/.gitkeep
 notebooks/.ipynb_checkpoints/
 
