@@ -26,7 +26,7 @@ from app.services.ai_agent_service import (
 
 router = APIRouter(tags=["ai_agent"])
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
+UPLOAD_DIR = "/tmp/uploads" if os.environ.get("VERCEL") else "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
