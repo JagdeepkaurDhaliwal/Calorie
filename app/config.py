@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,6 +24,19 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_origins: str = "*"
 
+    @model_validator(mode="after")
+    def ensure_serverless_safe_paths(self) -> "Settings":
+        is_serverless = bool(
+            os.environ.get("VERCEL")
+            or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+            or os.environ.get("LAMBDA_TASK_ROOT")
+        )
+        if is_serverless and self.database_url.startswith("sqlite"):
+            # Ensure SQLite is stored in /tmp on read-only serverless filesystems
+            if not ("/tmp/" in self.database_url or ":memory:" in self.database_url):
+                self.database_url = "sqlite:////tmp/caloriecast.db"
+        return self
+
     @property
     def artifact_path(self) -> Path:
         path = Path(self.artifact_dir)
@@ -32,3 +46,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

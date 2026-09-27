@@ -45,88 +45,124 @@ logger = logging.getLogger("caloriecast")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    logger.info("Initializing database tables...")
-    Base.metadata.create_all(bind=engine)
+    logger.info("Starting CalorieCast application...")
 
-    db = SessionLocal()
+    # 1. Initialize database tables safely
     try:
-        init_default_exercises(db)
-        init_default_foods(db)
+        logger.info("Initializing database tables...")
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        logger.error("Database table initialization error: %s", exc, exc_info=True)
 
-        # Ensure default demo user (Alex) exists
-        alex = db.query(User).filter(User.email == "alex@example.com").first()
-        if not alex:
-            alex = User(
-                name="Alex Runner",
-                email="alex@example.com",
-                password_hash=hash_password("Password123!"),
-                role="user",
-                gender="male",
-                age=28,
-                height_cm=178.0,
-                weight_kg=74.0,
-            )
-            db.add(alex)
-            db.commit()
-            logger.info("Created default demo user: alex@example.com")
+    # 2. Database seeding and model initialization
+    try:
+        db = SessionLocal()
+        try:
+            # Seed exercises
+            try:
+                init_default_exercises(db)
+            except Exception as exc:
+                logger.warning("Default exercises initialization skipped: %s", exc)
 
-        # Ensure admin accounts exist
-        for adm_email, adm_pass, adm_name in [
-            (settings.admin_email, settings.admin_password, "Administrator"),
-            ("admin@caloriecast.local", "AdminPassword123!", "CalorieCast Admin"),
-        ]:
-            if not db.query(User).filter(User.email == adm_email).first():
-                db.add(
-                    User(
-                        name=adm_name,
-                        email=adm_email,
-                        password_hash=hash_password(adm_pass),
-                        role="admin",
+            # Seed foods
+            try:
+                init_default_foods(db)
+            except Exception as exc:
+                logger.warning("Default foods initialization skipped: %s", exc)
+
+            # Ensure default demo user (Alex) exists
+            try:
+                alex = db.query(User).filter(User.email == "alex@example.com").first()
+                if not alex:
+                    alex = User(
+                        name="Alex Runner",
+                        email="alex@example.com",
+                        password_hash=hash_password("Password123!"),
+                        role="user",
                         gender="male",
-                        age=35,
-                        height_cm=180.0,
-                        weight_kg=80.0,
+                        age=28,
+                        height_cm=178.0,
+                        weight_kg=74.0,
                     )
-                )
-                db.commit()
-                logger.info("Created default admin user: %s", adm_email)
+                    db.add(alex)
+                    db.commit()
+                    logger.info("Created default demo user: alex@example.com")
+            except Exception as exc:
+                logger.warning("Demo user seeding skipped: %s", exc)
 
-        closed = close_stale_sessions(db)
-        if closed:
-            logger.info("Closed %d stale live sessions on startup", closed)
+            # Ensure admin accounts exist
+            try:
+                for adm_email, adm_pass, adm_name in [
+                    (settings.admin_email, settings.admin_password, "Administrator"),
+                    ("admin@caloriecast.local", "AdminPassword123!", "CalorieCast Admin"),
+                ]:
+                    if not db.query(User).filter(User.email == adm_email).first():
+                        db.add(
+                            User(
+                                name=adm_name,
+                                email=adm_email,
+                                password_hash=hash_password(adm_pass),
+                                role="admin",
+                                gender="male",
+                                age=35,
+                                height_cm=180.0,
+                                weight_kg=80.0,
+                            )
+                        )
+                        db.commit()
+                        logger.info("Created default admin user: %s", adm_email)
+            except Exception as exc:
+                logger.warning("Admin user seeding skipped: %s", exc)
 
-        active_version = db.query(ModelVersion).filter(ModelVersion.is_active.is_(True)).first()
-        if not active_version:
-            v1_dir = ROOT_DIR / "ml" / "artifacts" / "v1"
-            if v1_dir.exists() and (v1_dir / "regressor.joblib").exists():
-                v1_model = ModelVersion(
-                    id=1,
-                    algorithm="Random Forest",
-                    rmse=12.4,
-                    mae=8.5,
-                    r2=0.965,
-                    clf_accuracy=0.94,
-                    clf_f1=0.93,
-                    artifact_dir=str(v1_dir),
-                    dataset_id=None,
-                    is_active=True,
-                )
-                db.add(v1_model)
-                db.commit()
-                db.refresh(v1_model)
-                active_version = v1_model
-                logger.info("Auto-registered baseline model version 1 from %s", v1_dir)
+            # Close stale live sessions
+            try:
+                closed = close_stale_sessions(db)
+                if closed:
+                    logger.info("Closed %d stale live sessions on startup", closed)
+            except Exception as exc:
+                logger.warning("Stale sessions check skipped: %s", exc)
 
-        if active_version:
-            success = registry.try_reload(active_version.id, active_version.artifact_dir)
-            if success:
-                logger.info("Loaded active model version %s on startup", active_version.id)
-            else:
-                logger.warning("Failed to reload active model version %s on startup", active_version.id)
-        else:
-            logger.warning("No active model found in database. Run bootstrap_train.py to initialize.")
-    finally:
-        db.close()
+            # Auto-register and reload baseline model
+            try:
+                active_version = db.query(ModelVersion).filter(ModelVersion.is_active.is_(True)).first()
+                if not active_version:
+                    v1_dir = ROOT_DIR / "ml" / "artifacts" / "v1"
+                    if v1_dir.exists() and (v1_dir / "meta.json").exists():
+                        v1_model = ModelVersion(
+                            id=1,
+                            algorithm="Random Forest",
+                            rmse=12.4,
+                            mae=8.5,
+                            r2=0.965,
+                            clf_accuracy=0.94,
+                            clf_f1=0.93,
+                            artifact_dir=str(v1_dir),
+                            is_active=True,
+                        )
+                        db.add(v1_model)
+                        db.commit()
+                        db.refresh(v1_model)
+                        active_version = v1_model
+                        logger.info("Auto-registered baseline model version 1 from %s", v1_dir)
+
+                if active_version:
+                    # Safely resolve artifact directory (handles cross-platform or relative paths)
+                    artifact_path = Path(active_version.artifact_dir)
+                    if not artifact_path.is_absolute() or not artifact_path.exists():
+                        artifact_path = ROOT_DIR / "ml" / "artifacts" / "v1"
+                    success = registry.try_reload(active_version.id, artifact_path)
+                    if success:
+                        logger.info("Loaded active model version %s on startup", active_version.id)
+                    else:
+                        logger.warning("Failed to reload active model version %s on startup", active_version.id)
+                else:
+                    logger.warning("No active model found in database.")
+            except Exception as exc:
+                logger.warning("Model version initialization skipped: %s", exc)
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.error("Database connection failed during lifespan: %s", exc, exc_info=True)
 
     yield
     logger.info("Shutting down CalorieCast application.")
@@ -168,13 +204,28 @@ def health_check():
     return HealthResponse(status="ok", active_model_version=active_version)
 
 
-uploads_dir = Path("/tmp/uploads") if os.environ.get("VERCEL") else ROOT_DIR / "uploads"
-uploads_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+is_serverless = bool(
+    os.environ.get("VERCEL")
+    or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    or os.environ.get("LAMBDA_TASK_ROOT")
+)
+uploads_dir = Path("/tmp/uploads") if is_serverless else ROOT_DIR / "uploads"
+try:
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+except Exception:
+    uploads_dir = Path("/tmp/uploads")
+    try:
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
+if uploads_dir.exists():
+    app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 frontend_dir = ROOT_DIR / "frontend"
 if frontend_dir.exists():
     app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
+
 
 
 

@@ -50,12 +50,32 @@ class ModelRegistry:
     def active(self) -> LoadedModel:
         with self._lock:
             if self._loaded is None:
+                # Lazy-load baseline v1 model if available
+                from app.config import ROOT_DIR
+                v1_dir = ROOT_DIR / "ml" / "artifacts" / "v1"
+                if v1_dir.exists() and (v1_dir / "meta.json").exists():
+                    try:
+                        self._loaded = load_bundle(1, v1_dir)
+                        logger.info("Lazy-loaded baseline model version 1 from %s", v1_dir)
+                    except Exception as exc:
+                        logger.warning("Failed to lazy-load baseline model: %s", exc)
+            if self._loaded is None:
                 raise RuntimeError("No active model is loaded")
             return self._loaded
 
     def has_active(self) -> bool:
         with self._lock:
-            return self._loaded is not None
+            if self._loaded is not None:
+                return True
+            from app.config import ROOT_DIR
+            v1_dir = ROOT_DIR / "ml" / "artifacts" / "v1"
+            if v1_dir.exists() and (v1_dir / "meta.json").exists():
+                try:
+                    self._loaded = load_bundle(1, v1_dir)
+                    return True
+                except Exception:
+                    pass
+            return False
 
     def reload(self, version_id: int, artifact_dir: str | Path) -> None:
         loaded = load_bundle(version_id, Path(artifact_dir))
